@@ -45,7 +45,9 @@ import { JwtModule } from './jwt/jwt.module';
     GraphQLModule.forRoot({
       autoSchemaFile: true,
     }),
-    JwtModule.forRoot(),
+    JwtModule.forRoot({
+      secretKey: process.env.SECRET_KEY,
+    }),
     CommonModule,
     UsersModule,
   ],
