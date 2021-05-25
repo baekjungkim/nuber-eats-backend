@@ -1,3 +1,3 @@
-# Nuber Eats
+# NestJS Backend
 
-The Backend of Nuber Eats Clone
+The Backend of NestJS
