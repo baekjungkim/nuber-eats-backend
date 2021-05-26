@@ -50,6 +50,7 @@ import { JwtMiddleware } from './jwt/jwt.middleware';
     }),
     GraphQLModule.forRoot({
       autoSchemaFile: true,
+      context: ({ req }) => ({ user: req['user'] }),
     }),
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
@@ -67,10 +68,10 @@ import { JwtMiddleware } from './jwt/jwt.middleware';
 // repository, class, dependency injection 사용 가능
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // case 1. /graphql 라우트 에서 전체 Request method 에 미들웨어 적용
+    // case 1. /graphql 라우트 에서 POST Request method 에 미들웨어 적용
     consumer.apply(JwtMiddleware).forRoutes({
       path: '/graphql',
-      method: RequestMethod.ALL,
+      method: RequestMethod.POST,
     });
 
     // case 2. /api 라우트에서 모든 request method 에 미들웨어 제외
