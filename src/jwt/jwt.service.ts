@@ -12,4 +12,8 @@ export class JwtService {
   sign(payload: Record<string, unknown>): string {
     return jwt.sign(payload, this.options.secretKey);
   }
+
+  verify(token: string) {
+    return jwt.verify(token, this.options.secretKey);
+  }
 }

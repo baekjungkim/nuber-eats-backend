@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import * as Joi from 'joi';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -9,6 +14,7 @@ import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
+import { JwtMiddleware } from './jwt/jwt.middleware';
 
 @Module({
   imports: [
@@ -54,4 +60,23 @@ import { JwtModule } from './jwt/jwt.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+
+// 미들웨어 적용 방법 2
+// 특정 경로에만 사용할 때
+// Function, class middleware 사용 가능
+// repository, class, dependency injection 사용 가능
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // case 1. /graphql 라우트 에서 전체 Request method 에 미들웨어 적용
+    consumer.apply(JwtMiddleware).forRoutes({
+      path: '/graphql',
+      method: RequestMethod.ALL,
+    });
+
+    // case 2. /api 라우트에서 모든 request method 에 미들웨어 제외
+    // consumer.apply(JwtMiddleware).exclude({
+    //   path: '/api',
+    //   method: RequestMethod.ALL,
+    // });
+  }
+}
