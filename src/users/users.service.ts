@@ -13,6 +13,12 @@ export class UsersService {
     private readonly jwtService: JwtService,
   ) {}
 
+  // 전체 조회
+  users(): Promise<User[]> {
+    return this.usersRepository.find();
+  }
+
+  // 계정 생성
   async createAccount({
     email,
     password,
@@ -33,6 +39,7 @@ export class UsersService {
     }
   }
 
+  // 로그인
   async login({
     email,
     password,
@@ -71,6 +78,7 @@ export class UsersService {
     }
   }
 
+  // ID로 유저 조회
   async findById(id: number): Promise<User> {
     return this.usersRepository.findOne({ id });
   }

@@ -8,17 +8,13 @@ import * as Joi from 'joi';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RestaurantsModule } from './restaurants/restaurants.module';
-import { Restaurant } from './restaurants/entities/restaurant.entity';
 import { UsersModule } from './users/users.module';
-import { CommonModule } from './common/common.module';
-import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
-import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
+    // Config Setting, environment used
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath:
@@ -38,46 +34,28 @@ import { AuthModule } from './auth/auth.module';
         SECRET_KEY: Joi.string().required(),
       }),
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: +process.env.DB_PORT,
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      synchronize: process.env.NODE_ENV !== 'prod',
-      logging: process.env.NODE_ENV !== 'prod',
-      entities: [User],
-    }),
+    // TypeOrm Setting, ormconfig.js
+    TypeOrmModule.forRoot(),
+    // GraphQL Setting
     GraphQLModule.forRoot({
       autoSchemaFile: true,
       context: ({ req }) => ({ user: req['user'] }),
     }),
+    // Jwt Module Setting(Custom)
     JwtModule.forRoot({
       secretKey: process.env.SECRET_KEY,
     }),
+    // App Module
     UsersModule,
   ],
   controllers: [],
   providers: [],
 })
-
-// 미들웨어 적용 방법 2
-// 특정 경로에만 사용할 때
-// Function, class middleware 사용 가능
-// repository, class, dependency injection 사용 가능
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // case 1. /graphql 라우트 에서 POST Request method 에 미들웨어 적용
     consumer.apply(JwtMiddleware).forRoutes({
       path: '/graphql',
       method: RequestMethod.POST,
     });
-
-    // case 2. /api 라우트에서 모든 request method 에 미들웨어 제외
-    // consumer.apply(JwtMiddleware).exclude({
-    //   path: '/api',
-    //   method: RequestMethod.ALL,
-    // });
   }
 }

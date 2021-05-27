@@ -14,16 +14,19 @@ import { UsersService } from './users.service';
 export class UsersResolver {
   constructor(private readonly usersService: UsersService) {}
 
-  @Query(returns => Boolean)
-  users() {
-    return true;
+  // 전체 조회
+  @Query(returns => [User])
+  users(): Promise<User[]> {
+    return this.usersService.users();
   }
 
+  // 계정 생성
   @Mutation(returns => CreateAccountOutput)
   async createAccount(
     @Args('input') createAccountInput: CreateAccountInput,
   ): Promise<CreateAccountOutput> {
     try {
+      console.log(createAccountInput);
       return this.usersService.createAccount(createAccountInput);
     } catch (error) {
       return {
@@ -33,6 +36,7 @@ export class UsersResolver {
     }
   }
 
+  // 로그인
   @Mutation(returns => LoginOutput)
   async login(@Args('input') loginInput: LoginInput): Promise<LoginOutput> {
     try {
@@ -45,6 +49,7 @@ export class UsersResolver {
     }
   }
 
+  // 내 프로필
   @Query(returns => User)
   @UseGuards(AuthGuard)
   me(@AuthUser() authUser: User) {
