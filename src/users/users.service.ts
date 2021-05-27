@@ -5,21 +5,19 @@ import { CreateAccountInput } from './dtos/create-account.dto';
 import { LoginInput } from './dtos/login.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from '../jwt/jwt.service';
-import { EditProfileInput } from './dtos/edit-profile.dto';
+import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
+import { Verification } from './entities/verification.entity';
+import { UserProfileOutput } from './dtos/user-profile.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
+    @InjectRepository(Verification)
+    private readonly verificationRepository: Repository<Verification>,
     private readonly jwtService: JwtService,
   ) {}
 
-  // 전체 조회
-  users(): Promise<User[]> {
-    return this.usersRepository.find();
-  }
-
-  // 계정 생성
   async createAccount({
     email,
     password,
@@ -31,8 +29,13 @@ export class UsersService {
         return { ok: false, error: 'Ther is a user with that email already' };
       }
 
-      await this.usersRepository.save(
+      const user = await this.usersRepository.save(
         this.usersRepository.create({ email, password, role }),
+      );
+      await this.verificationRepository.save(
+        this.verificationRepository.create({
+          user,
+        }),
       );
       return { ok: true };
     } catch (e) {
@@ -40,13 +43,15 @@ export class UsersService {
     }
   }
 
-  // 로그인
   async login({
     email,
     password,
   }: LoginInput): Promise<{ ok: boolean; error?: string; token?: string }> {
     try {
-      const user = await this.usersRepository.findOne({ email });
+      const user = await this.usersRepository.findOne(
+        { email },
+        { select: ['id', 'password'] },
+      );
 
       if (!user) {
         return {
@@ -64,7 +69,6 @@ export class UsersService {
         };
       }
 
-      //   const token = jwt.sign({ id: user.id }, this.config.get('SECRET_KEY'));
       const token = this.jwtService.sign({ id: user.id });
 
       return {
@@ -79,22 +83,41 @@ export class UsersService {
     }
   }
 
-  // ID로 유저 조회
-  async findById(id: number): Promise<User> {
-    return this.usersRepository.findOne({ id });
+  async findById(id: number): Promise<UserProfileOutput> {
+    try {
+      const user = await this.usersRepository.findOneOrFail({ id });
+      return {
+        ok: true,
+        user,
+      };
+    } catch (error) {
+      return { ok: false, error: 'User Not Found' };
+    }
   }
 
   async editProfile(
     userId: number,
     { email, password }: EditProfileInput,
-  ): Promise<User> {
-    const user = await this.usersRepository.findOne(userId);
-    if (email) {
-      user.email = email;
+  ): Promise<EditProfileOutput> {
+    try {
+      const user = await this.usersRepository.findOne(userId);
+      if (email) {
+        user.email = email;
+        user.verified = false;
+        await this.verificationRepository.delete({ user: { id: user.id } });
+        await this.verificationRepository.save(
+          this.verificationRepository.create({ user }),
+        );
+      }
+      if (password) {
+        user.password = password;
+      }
+      await this.usersRepository.save(user);
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return { ok: false, error: 'Could not update profile.' };
     }
-    if (password) {
-      user.password = password;
-    }
-    return this.usersRepository.save(user);
   }
 }
