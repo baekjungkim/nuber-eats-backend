@@ -58,6 +58,7 @@ export class UsersResolver {
     return authUser;
   }
 
+  // 유저 프로필 조회
   @UseGuards(AuthGuard)
   @Query(returns => UserProfileOutput)
   async userProfile(
@@ -80,6 +81,7 @@ export class UsersResolver {
     }
   }
 
+  // 유저 프로필 수정
   @UseGuards(AuthGuard)
   @Mutation(returns => EditProfileOutput)
   async editProfile(
