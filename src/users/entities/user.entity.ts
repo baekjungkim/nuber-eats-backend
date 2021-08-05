@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { CommonEntity } from '../../common/entities/common.entity';
 import { IsEmail, IsEnum } from 'class-validator';
 
-enum UserRole {
+export enum UserRole {
   Owner = 'Owner',
   Client = 'Client',
   Delivery = 'Delivery',

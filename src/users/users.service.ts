@@ -9,6 +9,7 @@ import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { Verification } from './entities/verification.entity';
 import { UserProfileOutput } from './dtos/user-profile.dto';
 import { MailService } from '../mail/mail.service';
+import { VerifyEmailOutput } from './dtos/verify-email.dto';
 
 @Injectable()
 export class UsersService {
@@ -133,6 +134,26 @@ export class UsersService {
       };
     } catch (error) {
       return { ok: false, error: 'Could not update profile.' };
+    }
+  }
+
+  async verifyEmail(code: string): Promise<VerifyEmailOutput> {
+    try {
+      const verification = await this.verificationRepository.findOne(
+        { code },
+        { relations: ['user'] },
+      );
+      if (verification) {
+        verification.user.verified = true;
+        await this.usersRepository.save(verification.user);
+        await this.verificationRepository.delete(verification.id);
+        return {
+          ok: true,
+        };
+      }
+      return { ok: false, error: 'Verification not found.' };
+    } catch (e) {
+      return { ok: false, error: 'Could not verify email.' };
     }
   }
 }
