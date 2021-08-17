@@ -10,7 +10,6 @@ import { Verification } from './entities/verification.entity';
 import { UserProfileOutput } from './dtos/user-profile.dto';
 import { MailService } from '../mail/mail.service';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
-import { Console } from 'node:console';
 
 @Injectable()
 export class UsersService {
