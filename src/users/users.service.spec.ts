@@ -6,11 +6,13 @@ import { Verification } from './entities/verification.entity';
 import { JwtService } from '../jwt/jwt.service';
 import { MailService } from '../mail/mail.service';
 import { Repository } from 'typeorm';
+import { execPath } from 'node:process';
 
 const mockRepository = () => ({
   findOne: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
+  find: jest.fn(),
   findOneOrFail: jest.fn(),
   delete: jest.fn(),
 });
@@ -84,7 +86,7 @@ describe('UserService', () => {
       const result = await usersService.createAccount(createAccountArgs);
       expect(result).toMatchObject({
         ok: false,
-        error: 'Ther is a user with that email already',
+        error: 'There is a user with that email already',
       });
     });
 
@@ -177,7 +179,7 @@ describe('UserService', () => {
       usersRepository.findOne.mockResolvedValue(mockedUser);
       const result = await usersService.login(loginArgs);
       expect(jwtService.sign).toHaveBeenCalledTimes(1);
-      expect(jwtService.sign).toHaveBeenCalledWith(expect.any(Object));
+      expect(jwtService.sign).toHaveBeenCalledWith(expect.any(Number));
       expect(result).toEqual({ ok: true, token: 'signed-token' });
     });
 
@@ -225,6 +227,7 @@ describe('UserService', () => {
       const newUser = { verified: false, email: editProfileArgs.input.email };
 
       usersRepository.findOne.mockResolvedValue(oldUser);
+      usersRepository.find.mockResolvedValue([]);
       verificationRepository.create.mockReturnValue(newVerification);
       verificationRepository.save.mockResolvedValue(newVerification);
 
@@ -237,6 +240,11 @@ describe('UserService', () => {
       expect(usersRepository.findOne).toHaveBeenCalledWith(
         editProfileArgs.userId,
       );
+
+      expect(usersRepository.find).toHaveBeenCalledTimes(1);
+      expect(usersRepository.find).toHaveBeenCalledWith({
+        email: editProfileArgs.input.email,
+      });
 
       expect(verificationRepository.create).toHaveBeenCalledWith({
         user: newUser,
@@ -271,10 +279,35 @@ describe('UserService', () => {
       });
     });
 
+    it('should fail on already use email', async () => {
+      const editProfileArgs = {
+        userId: 1,
+        input: { email: 'test@old.com' },
+      };
+
+      usersRepository.find.mockResolvedValue([
+        {
+          email: editProfileArgs.input.email,
+        },
+      ]);
+
+      const result = await usersService.editProfile(
+        editProfileArgs.userId,
+        editProfileArgs.input,
+      );
+
+      expect(usersRepository.find).toHaveBeenCalledTimes(1);
+      expect(usersRepository.find).toHaveBeenCalledWith({
+        email: editProfileArgs.input.email,
+      });
+
+      expect(result).toEqual({ ok: false, error: 'This email is already use' });
+    });
+
     it('should fail on exception', async () => {
       usersRepository.findOne.mockRejectedValue(new Error());
       const result = await usersService.editProfile(1, { email: 'test' });
-      expect(result).toEqual({ ok: false, error: 'Could not update profile.' });
+      expect(result).toEqual({ ok: false, error: 'Could not update profile' });
     });
   });
 

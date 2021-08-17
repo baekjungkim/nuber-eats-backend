@@ -10,6 +10,7 @@ import { Verification } from './entities/verification.entity';
 import { UserProfileOutput } from './dtos/user-profile.dto';
 import { MailService } from '../mail/mail.service';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
+import { Console } from 'node:console';
 
 @Injectable()
 export class UsersService {
@@ -29,7 +30,7 @@ export class UsersService {
     try {
       const exists = await this.usersRepository.findOne({ email });
       if (exists) {
-        return { ok: false, error: 'Ther is a user with that email already' };
+        return { ok: false, error: 'There is a user with that email already' };
       }
 
       const user = await this.usersRepository.save(
@@ -113,6 +114,13 @@ export class UsersService {
     try {
       const user = await this.usersRepository.findOne(userId);
       if (email) {
+        const existsEmail = await this.usersRepository.find({ email });
+        if (existsEmail.length > 0) {
+          return {
+            ok: false,
+            error: 'This email is already use',
+          };
+        }
         user.email = email;
         user.verified = false;
         await this.verificationRepository.delete({ user: { id: user.id } });
@@ -133,7 +141,7 @@ export class UsersService {
         ok: true,
       };
     } catch (error) {
-      return { ok: false, error: 'Could not update profile.' };
+      return { ok: false, error: 'Could not update profile' };
     }
   }
 
