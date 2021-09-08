@@ -13,6 +13,10 @@ import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { MailModule } from './mail/mail.module';
 import { getConnectionOptions } from 'typeorm';
+import { User } from './users/entities/user.entity';
+import { Verification } from './users/entities/verification.entity';
+import { Restaurant } from './restaurants/entities/restaurant.entity';
+import { Category } from './restaurants/entities/category.entity';
 
 @Module({
   imports: [
@@ -39,12 +43,21 @@ import { getConnectionOptions } from 'typeorm';
         MAILGUN_FROM_EMAIL: Joi.string().required(),
       }),
     }),
-    // TypeOrmSetting
-    TypeOrmModule.forRootAsync({
-      useFactory: async () =>
-        Object.assign(await getConnectionOptions(), {
-          autoLoadEntities: true,
-        }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      ...(process.env.DATABASE_URL
+        ? { url: process.env.DATABASE_URL }
+        : {
+            host: process.env.DB_HOST,
+            port: +process.env.DB_PORT,
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+          }),
+      synchronize: process.env.NODE_ENV !== 'prod',
+      logging:
+        process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
+      entities: [User, Verification, Restaurant, Category],
     }),
     // GraphQL Setting
     GraphQLModule.forRoot({

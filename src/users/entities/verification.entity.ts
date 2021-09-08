@@ -20,8 +20,8 @@ const getRandomString = (length: number): string => {
 @ObjectType()
 @Entity()
 export class Verification extends CommonEntity {
-  @Column()
   @Field(type => String)
+  @Column()
   code: string;
 
   @OneToOne(type => User, { onDelete: 'CASCADE' })
