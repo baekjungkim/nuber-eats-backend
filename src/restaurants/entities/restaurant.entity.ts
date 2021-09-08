@@ -12,7 +12,7 @@ export class Restaurant extends CommonEntity {
   @Field(type => String)
   @Column()
   @IsString()
-  @Length(30)
+  @Length(5)
   name: string;
 
   @Field(type => String)

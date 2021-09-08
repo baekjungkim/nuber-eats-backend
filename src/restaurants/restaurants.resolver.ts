@@ -1,6 +1,12 @@
+import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { CreateRestaurantDto } from './dtos/create-restaurant.dto';
-import { UpdateRestaurantDto } from './dtos/update-restaurant.dto';
+import { AuthUser } from '../auth/auth-user.decorator';
+import { AuthGuard } from '../auth/auth.guard';
+import { User } from '../users/entities/user.entity';
+import {
+  CreateRestaurantInput,
+  CreateRestaurantOutput,
+} from './dtos/create-restaurant.dto';
 import { Restaurant } from './entities/restaurant.entity';
 import { RestaurantService } from './restaurants.service';
 
@@ -13,30 +19,15 @@ export class RestaurantsResolver {
     return this.restaurantService.getAll();
   }
 
-  @Mutation(returns => Boolean)
-  async createRestaurant(
-    @Args('input') createRestaurantDto: CreateRestaurantDto,
-  ): Promise<boolean> {
-    console.log(createRestaurantDto);
-    try {
-      await this.restaurantService.createRestaurant(createRestaurantDto);
-      return true;
-    } catch (e) {
-      console.log(e);
-      return false;
-    }
-  }
-
-  @Mutation(returns => Boolean)
-  async updateRestaurant(
-    @Args('input') updateRestaurantDto: UpdateRestaurantDto,
-  ): Promise<boolean> {
-    try {
-      await this.restaurantService.updateRestaurant(updateRestaurantDto);
-      return true;
-    } catch (e) {
-      console.log(e);
-      return false;
-    }
+  @UseGuards(AuthGuard)
+  @Mutation(returns => CreateRestaurantOutput)
+  createRestaurant(
+    @AuthUser() owner: User,
+    @Args('input') createRestaurantInput: CreateRestaurantInput,
+  ): Promise<CreateRestaurantOutput> {
+    return this.restaurantService.createRestaurant(
+      owner,
+      createRestaurantInput,
+    );
   }
 }
